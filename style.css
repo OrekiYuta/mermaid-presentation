@@ -1,0 +1,36 @@
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 40% 60%;
+  height: 100vh;
+}
+
+.left {
+  padding: 16px;
+  border-right: 1px solid #ddd;
+  overflow: auto;
+}
+
+.right {
+  padding: 16px;
+  overflow: auto;
+}
+
+textarea {
+  width: 100%;
+  height: 200px;
+  font-family: monospace;
+}
+
+.controls button {
+  margin-right: 6px;
+}
+
+.error {
+  color: red;
+  margin-top: 8px;
+}

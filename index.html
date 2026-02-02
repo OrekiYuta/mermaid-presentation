@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mermaid Live Presentation</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11.12.2/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <!-- LEFT -->
+    <div class="left">
+      <h3>Mermaid Code</h3>
+      <textarea id="editor"></textarea>
+
+      <h3>Animation Controls</h3>
+      <div class="controls">
+        <button id="startBtn">&lt;&lt;</button>
+        <button id="prevBtn">&lt;</button>
+        <button id="playBtn">Play</button>
+        <button id="nextBtn">&gt;</button>
+        <button id="endBtn">&gt;&gt;</button>
+      </div>
+
+      <div class="duration">
+        Frame Duration (ms):
+        <input id="durationInput" type="number" step="100" />
+      </div>
+
+      <div id="error" class="error"></div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right">
+      <div id="preview"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
