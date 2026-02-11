@@ -2,50 +2,26 @@ mermaid.initialize({
     startOnLoad: false
 });
 
-
-const startingDuration = 15000;
-const startingLineOfAnimation = 2;
+/* ===== Configuration (SECONDS) ===== */
+const startingDurationSeconds = 15;
+const startingLineOfAnimation = 1;
 const startingFrame = 0;
 
-
+/* ===== DOM ===== */
 const editor = document.getElementById("editor");
 const preview = document.getElementById("preview");
 const errorBox = document.getElementById("error");
 const playBtn = document.getElementById("playBtn");
 const durationInput = document.getElementById("durationInput");
 
-
-editor.value = `
-sequenceDiagram
-    participant Application
-    participant App Log Cluster
-    participant PII Detector
-    participant PII Dashboard
-    participant DevOps Team
-    Application ->> App Log Cluster: Collect PVT app logs
-    App Log Cluster ->> PII Detector: Sample PVT app logs
-    PII Detector ->> PII Dashboard: Publish PII detection results
-    alt PII detected True Positive
-        DevOps Team ->> PII Dashboard: Review PII detection results
-        alt Identified as PII 
-            DevOps Team ->> DevOps Team: No action required
-        else Identified NOT as PII (False Positive)
-            DevOps Team ->> PII Detector: Enhance PII detection logic & Redeploy
-        end
-    else PII missed False Negative
-        DevOps Team ->> DevOps Team: Discover false negative cases
-        DevOps Team ->> PII Detector: Enhance PII detection logic & Redeploy
-    end
-`;
-
-
+/* ===== State ===== */
 let frame = startingFrame;
-let frameDuration = startingDuration;
+let frameDurationMs = startingDurationSeconds * 1000;
 let playing = false;
 let animationTimeout = null;
 let renderId = 0;
 
-
+/* ===== Helpers ===== */
 function getLines() {
     return editor.value.split("\n");
 }
@@ -54,6 +30,7 @@ function getLastFrame() {
     return getLines().length - startingLineOfAnimation - 1;
 }
 
+/* ===== Render ===== */
 async function renderFrame() {
     const lines = getLines();
     const code = lines
@@ -64,7 +41,7 @@ async function renderFrame() {
     errorBox.textContent = "";
 
     try {
-        const {svg} = await mermaid.render(
+        const { svg } = await mermaid.render(
             "graph_" + renderId++,
             code
         );
@@ -74,7 +51,7 @@ async function renderFrame() {
     }
 }
 
-
+/* ===== Controls ===== */
 function handleStart() {
     frame = startingFrame;
     renderFrame();
@@ -107,7 +84,7 @@ function handleAnimation() {
     animationTimeout = setTimeout(() => {
         handleNextFrame();
         handleAnimation();
-    }, frameDuration);
+    }, frameDurationMs);
 }
 
 function handlePlay() {
@@ -134,17 +111,20 @@ function handlePause() {
     playBtn.textContent = "Play";
 }
 
-
+/* ===== Bindings ===== */
 document.getElementById("startBtn").onclick = handleStart;
 document.getElementById("endBtn").onclick = handleEnd;
 document.getElementById("prevBtn").onclick = handlePreviousFrame;
 document.getElementById("nextBtn").onclick = handleNextFrame;
 playBtn.onclick = handlePlay;
 
-durationInput.value = frameDuration;
+/* ===== Duration Input (SECONDS) ===== */
+durationInput.value = startingDurationSeconds;
 durationInput.onchange = e => {
-    frameDuration = Number(e.target.value);
+    const seconds = Math.max(0.1, Number(e.target.value) || 1);
+    frameDurationMs = seconds * 1000;
+    e.target.value = seconds;
 };
 
-
+/* ===== Initial Render ===== */
 renderFrame();

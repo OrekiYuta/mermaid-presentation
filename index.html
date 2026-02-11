@@ -11,7 +11,28 @@
     <!-- LEFT -->
     <div class="left">
       <h3>Mermaid Code</h3>
-      <textarea id="editor"></textarea>
+      <textarea id="editor">
+      sequenceDiagram
+          participant Application
+          participant App Log Cluster
+          participant PII Detector
+          participant PII Dashboard
+          participant DevOps Team
+          Application ->> App Log Cluster: Collect PVT app logs
+          App Log Cluster ->> PII Detector: Sample PVT app logs
+          PII Detector ->> PII Dashboard: Publish PII detection results
+          alt PII detected True Positive
+              DevOps Team ->> PII Dashboard: Review PII detection results
+              alt Identified as PII
+                  DevOps Team ->> DevOps Team: No action required
+              else Identified NOT as PII (False Positive)
+                  DevOps Team ->> PII Detector: Enhance PII detection logic & Redeploy
+              end
+          else PII missed False Negative
+              DevOps Team ->> DevOps Team: Discover false negative cases
+              DevOps Team ->> PII Detector: Enhance PII detection logic & Redeploy
+          end
+      </textarea>
 
       <h3>Animation Controls</h3>
       <div class="controls">
@@ -23,8 +44,8 @@
       </div>
 
       <div class="duration">
-        Frame Duration (ms):
-        <input id="durationInput" type="number" step="100" />
+        Frame Duration (seconds):
+        <input id="durationInput" type="number" step="0.5" min="0.1" />
       </div>
 
       <div id="error" class="error"></div>
