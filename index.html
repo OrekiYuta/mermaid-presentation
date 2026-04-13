@@ -10,16 +10,25 @@
   <div class="layout">
     <!-- LEFT -->
     <div class="left">
-      <h3>Mermaid Code</h3>
-      <textarea id="editor"></textarea>
+      <div class="topTools">
+        <div>
+          <h3>Animation Controls</h3>
+          <div class="controls">
+            <button id="startBtn">&lt;&lt;</button>
+            <button id="prevBtn">&lt;</button>
+            <button id="playBtn">Play</button>
+            <button id="nextBtn">&gt;</button>
+            <button id="endBtn">&gt;&gt;</button>
+          </div>
+        </div>
 
-      <h3>Animation Controls</h3>
-      <div class="controls">
-        <button id="startBtn">&lt;&lt;</button>
-        <button id="prevBtn">&lt;</button>
-        <button id="playBtn">Play</button>
-        <button id="nextBtn">&gt;</button>
-        <button id="endBtn">&gt;&gt;</button>
+        <div class="exportBox">
+          <h3>Export</h3>
+          <div class="exportActions">
+            <button id="downloadBtn">Download SVG</button>
+          </div>
+          <div id="exportStatus" class="exportStatus"></div>
+        </div>
       </div>
 
       <div class="duration">
@@ -27,8 +36,16 @@
         <input id="durationInput" type="number" step="100" />
       </div>
 
+      <div class="sectionHeader">
+        <h3>Mermaid Code</h3>
+        <div id="stepInfo" class="stepInfo"></div>
+      </div>
+      <textarea id="editor" wrap="off" spellcheck="false"></textarea>
+
       <div id="error" class="error"></div>
     </div>
+
+    <div id="paneDivider" class="paneDivider" aria-label="Resize panels" role="separator"></div>
 
     <!-- RIGHT -->
     <div class="right">

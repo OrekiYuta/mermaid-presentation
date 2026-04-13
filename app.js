@@ -3,7 +3,7 @@ mermaid.initialize({
 });
 
 
-const startingDuration = 15000;
+const startingDuration = 1000;
 const startingLineOfAnimation = 2;
 const startingFrame = 0;
 
@@ -16,6 +16,11 @@ const preview = document.getElementById("preview");
 const errorBox = document.getElementById("error");
 const playBtn = document.getElementById("playBtn");
 const durationInput = document.getElementById("durationInput");
+const stepInfo = document.getElementById("stepInfo");
+const downloadBtn = document.getElementById("downloadBtn");
+const exportStatus = document.getElementById("exportStatus");
+const layout = document.querySelector(".layout");
+const paneDivider = document.getElementById("paneDivider");
 
 
 editor.value = `
@@ -47,6 +52,8 @@ let frameDuration = startingDuration;
 let playing = false;
 let animationTimeout = null;
 let renderId = 0;
+let activeLineIndex = 0;
+let exportStatusTimeout = null;
 
 
 function getLines() {
@@ -54,7 +61,167 @@ function getLines() {
 }
 
 function getLastFrame() {
-    return getLines().length - startingLineOfAnimation - 1;
+    return Math.max(startingFrame, getLines().length - startingLineOfAnimation - 1);
+}
+
+function getActiveLineIndex(lines) {
+    if (lines.length === 0) {
+        return 0;
+    }
+    const candidate = startingLineOfAnimation + frame - 1;
+    return Math.max(0, Math.min(candidate, lines.length - 1));
+}
+
+function getEditorLineHeightPx() {
+    const raw = window.getComputedStyle(editor).lineHeight;
+    const value = Number.parseFloat(raw);
+    return Number.isFinite(value) ? value : 20;
+}
+
+function renderEditorHighlight() {
+    const styles = window.getComputedStyle(editor);
+    const lineHeight = getEditorLineHeightPx();
+    const paddingTop = Number.parseFloat(styles.paddingTop) || 0;
+    const offset = paddingTop + activeLineIndex * lineHeight - editor.scrollTop;
+
+    editor.style.setProperty("--editor-line-height", `${lineHeight}px`);
+    editor.style.setProperty("--active-line-offset", `${offset}px`);
+}
+
+function initPaneResize() {
+    if (!layout || !paneDivider) {
+        return;
+    }
+
+    let dragging = false;
+    let startX = 0;
+    let startWidth = 0;
+
+    const onPointerMove = e => {
+        if (!dragging) {
+            return;
+        }
+
+        const rect = layout.getBoundingClientRect();
+        const nextWidth = startWidth + (e.clientX - startX);
+        const minWidth = 320;
+        const maxWidth = Math.max(minWidth, rect.width - 440);
+        const clampedWidth = Math.min(maxWidth, Math.max(minWidth, nextWidth));
+
+        layout.style.setProperty("--left-pane-width", `${clampedWidth}px`);
+    };
+
+    const stopDragging = () => {
+        if (!dragging) {
+            return;
+        }
+
+        dragging = false;
+        document.body.style.userSelect = "";
+        document.body.style.cursor = "";
+    };
+
+    paneDivider.addEventListener("pointerdown", e => {
+        const leftPane = layout.querySelector(".left");
+        if (!leftPane) {
+            return;
+        }
+
+        dragging = true;
+        startX = e.clientX;
+        startWidth = leftPane.getBoundingClientRect().width;
+
+        document.body.style.userSelect = "none";
+        document.body.style.cursor = "col-resize";
+        paneDivider.setPointerCapture(e.pointerId);
+    });
+
+    paneDivider.addEventListener("pointermove", onPointerMove);
+    paneDivider.addEventListener("pointerup", stopDragging);
+    paneDivider.addEventListener("pointercancel", stopDragging);
+    window.addEventListener("pointerup", stopDragging);
+}
+
+function renderStepInfo() {
+    if (!stepInfo) {
+        return;
+    }
+    stepInfo.textContent = `Step ${frame} / ${getLastFrame()}`;
+}
+
+function showMessage(message, isError) {
+    errorBox.style.color = isError ? "red" : "#1a7f37";
+    errorBox.textContent = message;
+}
+
+function showExportMessage(message, isError) {
+    if (!exportStatus) {
+        return;
+    }
+
+    if (exportStatusTimeout) {
+        clearTimeout(exportStatusTimeout);
+        exportStatusTimeout = null;
+    }
+
+    exportStatus.style.color = isError ? "red" : "#1a7f37";
+    exportStatus.textContent = message;
+
+    if (!isError && message) {
+        exportStatusTimeout = setTimeout(() => {
+            exportStatus.textContent = "";
+            exportStatusTimeout = null;
+        }, 2000);
+    }
+}
+
+function getPreviewSvgElement() {
+    return preview.querySelector("svg");
+}
+
+function getPreviewSvgMarkup(svgElement) {
+    const exportSvg = svgElement.cloneNode(true);
+    const rect = svgElement.getBoundingClientRect();
+    const width = Math.max(1, Math.round(rect.width || svgElement.viewBox.baseVal.width || 1200));
+    const height = Math.max(1, Math.round(rect.height || svgElement.viewBox.baseVal.height || 800));
+
+    exportSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    exportSvg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+    exportSvg.setAttribute("width", String(width));
+    exportSvg.setAttribute("height", String(height));
+
+    if (!exportSvg.getAttribute("viewBox")) {
+        exportSvg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    }
+
+    const serializer = new XMLSerializer();
+    return `<?xml version="1.0" encoding="UTF-8"?>\n${serializer.serializeToString(exportSvg)}`;
+}
+
+function getPreviewSvgBlob() {
+    const svgElement = getPreviewSvgElement();
+    if (!svgElement) {
+        throw new Error("No diagram available to export yet.");
+    }
+    const svgMarkup = getPreviewSvgMarkup(svgElement);
+    return new Blob([svgMarkup], {type: "image/svg+xml;charset=utf-8"});
+}
+
+async function handleDownloadImage() {
+    try {
+        const blob = getPreviewSvgBlob();
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.download = `mermaid-step-${frame}.svg`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(objectUrl);
+        showExportMessage("SVG downloaded.", false);
+    } catch (e) {
+        showExportMessage(e.message, true);
+    }
 }
 
 function isSequenceDiagram(lines) {
@@ -135,11 +302,17 @@ function getRenderableLines(lines, allLines) {
 
 async function renderFrame() {
     const lines = getLines();
+    frame = Math.max(startingFrame, Math.min(frame, getLastFrame()));
+    activeLineIndex = getActiveLineIndex(lines);
+
+    renderEditorHighlight();
+    renderStepInfo();
+
     const frameLines = lines.slice(0, startingLineOfAnimation + frame);
     const code = getRenderableLines(frameLines, lines).join("\n");
 
     preview.innerHTML = "";
-    errorBox.textContent = "";
+    showMessage("", true);
 
     try {
         const {svg} = await mermaid.render(
@@ -218,11 +391,27 @@ document.getElementById("endBtn").onclick = handleEnd;
 document.getElementById("prevBtn").onclick = handlePreviousFrame;
 document.getElementById("nextBtn").onclick = handleNextFrame;
 playBtn.onclick = handlePlay;
+if (downloadBtn) {
+    downloadBtn.onclick = handleDownloadImage;
+}
 
 durationInput.value = frameDuration;
 durationInput.onchange = e => {
     frameDuration = Number(e.target.value);
 };
 
+editor.oninput = () => {
+    if (animationTimeout) {
+        handlePause();
+    }
+    showExportMessage("", false);
+    renderFrame();
+};
+
+editor.onscroll = () => {
+    renderEditorHighlight();
+};
+
 
 renderFrame();
+initPaneResize();
