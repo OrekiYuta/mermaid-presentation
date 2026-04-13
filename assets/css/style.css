@@ -34,6 +34,7 @@ body {
 }
 
 .right {
+  position: relative;
   padding: 16px;
   border: 1px solid #d9e0ea;
   border-radius: 12px;
@@ -198,12 +199,42 @@ button:active {
 }
 
 #preview {
-  padding: 10px;
+  padding: 10px 10px 44px;
   min-width: max-content;
 }
 
 #preview svg {
   display: block;
+}
+
+.repoLink {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.92);
+  border: 1px solid #d9e0ea;
+  color: #64748b;
+  font-size: 12px;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+}
+
+.repoLink svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  flex: 0 0 auto;
+}
+
+.repoLink:hover {
+  color: #2563eb;
+  border-color: #93c5fd;
+  background: rgba(239, 246, 255, 0.96);
 }
 
 .error {
@@ -221,3 +252,4 @@ button:active {
     display: none;
   }
 }
+

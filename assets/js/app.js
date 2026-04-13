@@ -207,13 +207,24 @@ function getPreviewSvgBlob() {
     return new Blob([svgMarkup], {type: "image/svg+xml;charset=utf-8"});
 }
 
+function getTimestampForFilename(date = new Date()) {
+    const pad = value => String(value).padStart(2, "0");
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hour = pad(date.getHours());
+    const minute = pad(date.getMinutes());
+    const second = pad(date.getSeconds());
+    return `${year}${month}${day}${hour}${minute}${second}`;
+}
+
 async function handleDownloadImage() {
     try {
         const blob = getPreviewSvgBlob();
         const objectUrl = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = objectUrl;
-        a.download = `mermaid-step-${frame}.svg`;
+        a.download = `mermaid_presentaion_${getTimestampForFilename()}.svg`;
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -415,3 +426,4 @@ editor.onscroll = () => {
 
 renderFrame();
 initPaneResize();
+
